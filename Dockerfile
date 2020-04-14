@@ -99,4 +99,4 @@ EXPOSE 80
 EXPOSE 443
 
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["httpd -D FOREGROUND -f /etc/apache2/httpd.conf"]
