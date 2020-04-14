@@ -1,48 +1,46 @@
-FROM php:5.6.40-alpine
+FROM php:7.4.4-fpm-alpine
 
 LABEL maintainer="Robbio <github.com/pigr8>" \
       architecture="amd64/x86_64" \
       alpine-version="3.11.2" \
       apache-version="2.4.43" \
-      php-version="5.6.40"
+      php-fpm-version="7.4.4"
 
-# persistent dependencies
 RUN apk add --no-cache \
-# in theory, docker-entrypoint.sh is POSIX-compliant, but priority is a working, consistent image
 		bash \
-# BusyBox sed is not sufficient for some of our sed expressions
 		sed \
-# Needed for adding timezones and fixing localtime
 		tzdata \
-# Ghostscript is required for rendering PDF previews
-		ghostscript \
-# Apache2 with FPM, SSL and HTTP/2 support
 		apache2 \
 		apache2-proxy \
 		apache2-http2 \
-		apache2-ssl
-# install the PHP extensions we need (https://make.wordpress.org/hosting/handbook/handbook/server-environment/#php-extensions)
+		apache2-ssl \
+		supervisor
+
 RUN set -ex; \
 	\
 	apk add --no-cache --virtual .build-deps \
 		$PHPIZE_DEPS \
+		libmemcached-dev \
 		freetype-dev \
-		imagemagick-dev \
 		libjpeg-turbo-dev \
 		libpng-dev \
+		libwebp-dev \
+		libxpm-dev \
 		libzip-dev \
 	; \
 	\
-	docker-php-ext-configure gd --with-freetype --with-jpeg; \
-	docker-php-ext-install -j "$(nproc)" \
-		bcmath \
-		exif \
+#	docker-php-ext-configure gd --with-gd --with-webp-dir --with-jpeg-dir --with-png-dir --with-freetype-dir --with-xpm-dir --with-zlib-dir; \
+        docker-php-ext-configure gd --with-freetype --with-jpeg; \
+        docker-php-ext-install -j "$(nproc)" \
+		gd \
 		mysqli \
-		opcache \
+		opcache
 		zip \
+		exif \
 	; \
-	pecl install imagick-3.4.4; \
-	docker-php-ext-enable imagick; \
+	pecl channel-update pecl.php.net; \
+	pecl install memcached; \
+	docker-php-ext-enable memcached; \
 	\
 	runDeps="$( \
 		scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
@@ -50,17 +48,16 @@ RUN set -ex; \
 			| sort -u \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)"; \
-	apk add --virtual .wordpress-phpexts-rundeps $runDeps; \
+	apk add --virtual .vb-phpexts-rundeps $runDeps; \
 	apk del .build-deps
 
-# set recommended PHP.ini settings
-# see https://secure.php.net/manual/en/opcache.installation.php
 RUN { \
 		echo 'opcache.memory_consumption=128'; \
 		echo 'opcache.interned_strings_buffer=8'; \
 		echo 'opcache.max_accelerated_files=4000'; \
 		echo 'opcache.revalidate_freq=2'; \
 		echo 'opcache.fast_shutdown=1'; \
+                echo 'opcache.enable_cli=1'; \
 	} > /usr/local/etc/php/conf.d/opcache-recommended.ini
 
 RUN { \
@@ -75,27 +72,32 @@ RUN { \
 		echo 'html_errors = Off'; \
 	} > /usr/local/etc/php/conf.d/error-logging.ini
 
+RUN { \
+                echo 'file_uploads=On'; \
+                echo 'upload_max_filesize=10M'; \
+                echo 'post_max_size=10M'; \
+                echo 'max_execution_time=20'; \
+                echo 'memory_limit=256M'; \
+        } > /usr/local/etc/php/conf.d/vb-recommended.ini
+
 VOLUME /var/www/html
 
 ENV TZ Europe/Rome
 ENV PUID 1000
 
-# Fixes uid/gid of nobody, clearing unused users and groups
 RUN sed -i 's/:65534:65534:nobody:\/:/:1000:100:nobody:\/var\/www:/g' /etc/passwd && \
     sed -i '/^\s*www-data/ d' /etc/passwd /etc/group && \
     sed -i '/^\s*apache/ d' /etc/passwd /etc/group && \
     sed -i 's/user = www-data/user = nobody/g' /usr/local/etc/php-fpm.d/www.conf && \
     sed -i 's/group = www-data/group = users/g' /usr/local/etc/php-fpm.d/www.conf
 
-# Setting up Apache2 and PHP
 COPY config/httpd.conf /etc/apache2/
-
-# Setting up the Container and Supervisor
 COPY entrypoint.sh /usr/bin/
+COPY config/supervisord.conf /etc/
 RUN chmod +x /usr/bin/entrypoint.sh
 
 EXPOSE 80
 EXPOSE 443
 
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["httpd -D FOREGROUND -f /etc/apache2/httpd.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
