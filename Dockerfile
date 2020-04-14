@@ -91,9 +91,9 @@ RUN sed -i 's/:65534:65534:nobody:\/:/:1000:100:nobody:\/var\/www:/g' /etc/passw
     sed -i 's/user = www-data/user = nobody/g' /usr/local/etc/php-fpm.d/www.conf && \
     sed -i 's/group = www-data/group = users/g' /usr/local/etc/php-fpm.d/www.conf
 
-COPY config/httpd.conf /etc/apache2/
+COPY httpd.conf /etc/apache2/
 COPY entrypoint.sh /usr/bin/
-COPY config/supervisord.conf /etc/
+COPY supervisord.conf /etc/
 RUN chmod +x /usr/bin/entrypoint.sh
 
 EXPOSE 80
