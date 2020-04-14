@@ -1,10 +1,10 @@
-FROM php:7.1.33-fpm-alpine
+FROM php:5.6.40-alpine
 
 LABEL maintainer="Robbio <github.com/pigr8>" \
       architecture="amd64/x86_64" \
       alpine-version="3.11.2" \
       apache-version="2.4.43" \
-      php-fpm-version="7.1.33"
+      php-version="5.6.40"
 
 # persistent dependencies
 RUN apk add --no-cache \
@@ -20,9 +20,7 @@ RUN apk add --no-cache \
 		apache2 \
 		apache2-proxy \
 		apache2-http2 \
-		apache2-ssl \
-# Supervisor install
-		supervisor
+		apache2-ssl
 # install the PHP extensions we need (https://make.wordpress.org/hosting/handbook/handbook/server-environment/#php-extensions)
 RUN set -ex; \
 	\
