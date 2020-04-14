@@ -34,7 +34,7 @@ RUN set -ex; \
         docker-php-ext-install -j "$(nproc)" \
 		gd \
 		mysqli \
-		opcache
+		opcache \
 		zip \
 		exif \
 	; \
