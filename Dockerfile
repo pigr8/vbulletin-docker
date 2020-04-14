@@ -92,7 +92,6 @@ COPY config/httpd.conf /etc/apache2/
 
 # Setting up the Container and Supervisor
 COPY entrypoint.sh /usr/bin/
-COPY config/supervisord.conf /etc/
 RUN chmod +x /usr/bin/entrypoint.sh
 
 EXPOSE 80
