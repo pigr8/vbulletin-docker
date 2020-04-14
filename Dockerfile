@@ -1,10 +1,10 @@
-FROM php:7.1.33-fpm-alpine
+FROM php:5.6.40-fpm-alpine
 
 LABEL maintainer="Robbio <github.com/pigr8>" \
       architecture="amd64/x86_64" \
       alpine-version="3.11.2" \
       apache-version="2.4.43" \
-      php-fpm-version="7.1.33"
+      php-fpm-version="5.6.40"
 
 # persistent dependencies
 RUN apk add --no-cache \
