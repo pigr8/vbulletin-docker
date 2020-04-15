@@ -1,10 +1,10 @@
-FROM php:7.4.4-fpm-alpine
+FROM php:5.6.40-alpine
 
 LABEL maintainer="Robbio <github.com/pigr8>" \
       architecture="amd64/x86_64" \
       alpine-version="3.11.2" \
       apache-version="2.4.43" \
-      php-fpm-version="7.4.4"
+      php-version="5.6.40"
 
 RUN apk add --no-cache \
 		bash \
@@ -13,8 +13,7 @@ RUN apk add --no-cache \
 		apache2 \
 		apache2-proxy \
 		apache2-http2 \
-		apache2-ssl \
-		supervisor
+		apache2-ssl
 
 RUN set -ex; \
 	\
@@ -29,8 +28,8 @@ RUN set -ex; \
 		libzip-dev \
 	; \
 	\
-#	docker-php-ext-configure gd --with-gd --with-webp-dir --with-jpeg-dir --with-png-dir --with-freetype-dir --with-xpm-dir --with-zlib-dir; \
-        docker-php-ext-configure gd --with-freetype --with-jpeg; \
+	docker-php-ext-configure gd --with-gd --with-webp-dir --with-jpeg-dir --with-png-dir --with-freetype-dir --with-xpm-dir --with-zlib-dir; \
+#        docker-php-ext-configure gd --with-freetype --with-jpeg; \
         docker-php-ext-install -j "$(nproc)" \
 		gd \
 		mysqli \
@@ -93,11 +92,10 @@ RUN sed -i 's/:65534:65534:nobody:\/:/:1000:100:nobody:\/var\/www:/g' /etc/passw
 
 COPY httpd.conf /etc/apache2/
 COPY entrypoint.sh /usr/bin/
-COPY supervisord.conf /etc/
 RUN chmod +x /usr/bin/entrypoint.sh
 
 EXPOSE 80
 EXPOSE 443
 
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["httpd -D FOREGROUND -f /etc/apache2/httpd.conf"]
