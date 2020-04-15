@@ -13,7 +13,8 @@ RUN apk add --no-cache \
 		apache2 \
 		apache2-proxy \
 		apache2-http2 \
-		apache2-ssl
+		apache2-ssl \
+		supervisor
 
 RUN set -ex; \
 	\
@@ -92,10 +93,11 @@ RUN sed -i 's/:65534:65534:nobody:\/:/:1000:100:nobody:\/var\/www:/g' /etc/passw
 
 COPY httpd.conf /etc/apache2/
 COPY entrypoint.sh /usr/bin/
+COPY supervisord.conf /etc/
 RUN chmod +x /usr/bin/entrypoint.sh
 
 EXPOSE 80
 EXPOSE 443
 
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["httpd", "-D", "FOREGROUND", "-f", "/etc/apache2/httpd.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
