@@ -89,7 +89,8 @@ RUN sed -i 's/:65534:65534:nobody:\/:/:1000:100:nobody:\/var\/www:/g' /etc/passw
     sed -i '/^\s*www-data/ d' /etc/passwd /etc/group && \
     sed -i '/^\s*apache/ d' /etc/passwd /etc/group && \
     sed -i 's/user = www-data/user = nobody/g' /usr/local/etc/php-fpm.d/www.conf && \
-    sed -i 's/group = www-data/group = users/g' /usr/local/etc/php-fpm.d/www.conf
+    sed -i 's/group = www-data/group = users/g' /usr/local/etc/php-fpm.d/www.conf  && \
+    sed -i 's|PidFile "/run/apache2/httpd.pid"|PidFile "/run/httpd.pid"|' /etc/apache2/conf.d/mpm.conf
 
 COPY httpd.conf /etc/apache2/
 COPY entrypoint.sh /usr/bin/
