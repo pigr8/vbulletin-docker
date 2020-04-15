@@ -39,9 +39,6 @@ RUN set -ex; \
 		exif \
 	; \
 	pecl channel-update pecl.php.net; \
-#	pecl install memcached; \
-#	docker-php-ext-enable memcached; \
-	\
 	runDeps="$( \
 		scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
 			| tr ',' '\n' \
