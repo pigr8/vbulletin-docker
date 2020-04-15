@@ -98,4 +98,4 @@ EXPOSE 80
 EXPOSE 443
 
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["httpd -D FOREGROUND -f /etc/apache2/httpd.conf"]
+CMD ["httpd", "-D", "FOREGROUND", "-f", "/etc/apache2/httpd.conf"]
